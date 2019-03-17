@@ -118,7 +118,7 @@ def select_lesson(screen):
     screen.fill(white)
 
     path = Path('./lessons')
-    lesson_paths = [str(path / f) for f in os.listdir(path) if f.endswith('.lesson')]
+    lesson_paths = [str(path / f) for f in os.listdir(str(path)) if f.endswith('.lesson')]
     lessons = []
     for lesson_path in lesson_paths:
         lesson_file = open(lesson_path, 'r')
