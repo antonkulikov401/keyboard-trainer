@@ -44,7 +44,7 @@ def level_finished(screen, level_state):
                  height // 2 - 30, 36)
     mistakes = Text('mistakes: ' + str(level_state.mistakes) + ' (' + str(round(level_state.mistake_percentage(), 2))
                     + '%)', width // 2, height // 2 + 30, 36)
-    btn_main = Button(80, 50, 'back', 'images\\button_inactive.png', 'images\\button_active.png',
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')), str(Path('images/button_active.png')),
                       arguments(screen)(main_menu), 120)
     gui = pygame.sprite.Group()
     gui.add(btn_main)
@@ -117,8 +117,8 @@ def select_lesson(screen):
     width, height = screen.get_size()
     screen.fill(white)
 
-    path = '.\\lessons'
-    lesson_paths = ['\\'.join((path, f)) for f in os.listdir(path) if f.endswith('.lesson')]
+    path = Path('./lessons')
+    lesson_paths = [str(path / f) for f in os.listdir(path) if f.endswith('.lesson')]
     lessons = []
     for lesson_path in lesson_paths:
         lesson_file = open(lesson_path, 'r')
@@ -175,7 +175,7 @@ def stats(screen):
         mistakes[stat[0]] = tmp_mistakes
 
     numbering = [Text(str(i+1) + '.', 100, height // 4 - 23 + i * 85, 36) for i in range(5)]
-    btn_main = Button(80, 50, 'back', 'images\\button_inactive.png', 'images\\button_active.png',
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')), str(Path('images/button_active.png')),
                       arguments(screen)(main_menu), 120)
     selector = Selector(width // 2, 50, [x[0] for x in stats], [None] * len(stats))
     no_stats = Text('no statistics yet', width // 2, height // 2, 36)
@@ -220,12 +220,12 @@ def main_menu(screen):
     screen.fill(white)
 
     caption = Text('keyboard trainer', width // 2, height // 4, 80)
-    btn_play = Button(width // 2, height // 2, 'play', 'images\\button_inactive.png', 'images\\button_active.png',
-                      arguments(screen)(select_lesson), 300)
-    btn_stats = Button(width // 2, height // 2 + 100, 'statistics', 'images\\button_inactive.png',
-                       'images\\button_active.png', arguments(screen)(stats), 300)
-    btn_quit = Button(width // 2, height // 2 + 200, 'exit', 'images\\button_inactive.png',
-                      'images\\button_active.png', quit, 300)
+    btn_play = Button(width // 2, height // 2, 'play', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')), arguments(screen)(select_lesson), 300)
+    btn_stats = Button(width // 2, height // 2 + 100, 'statistics', str(Path('images/button_inactive.png')),
+                       str(Path('images/button_active.png')), arguments(screen)(stats), 300)
+    btn_quit = Button(width // 2, height // 2 + 200, 'exit', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')), quit, 300)
     gui = pygame.sprite.Group()
     gui.add(btn_play)
     gui.add(btn_stats)
