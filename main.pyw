@@ -41,11 +41,11 @@ def level_finished(screen, level_state):
     stats_file.close()
 
     speed = Text('average speed: ' + str(round(level_state.speed, 2)) + ' symbols per minute', width // 2,
-                 height // 2 - 30, 48)
+                 height // 2 - 30, 36)
     mistakes = Text('mistakes: ' + str(level_state.mistakes) + ' (' + str(round(level_state.mistake_percentage(), 2))
-                    + '%)', width // 2, height // 2 + 30, 48)
-    btn_main = Button(160, 70, 'back', 'images\\button_inactive.png', 'images\\button_active.png',
-                      arguments(screen)(main_menu))
+                    + '%)', width // 2, height // 2 + 30, 36)
+    btn_main = Button(80, 50, 'back', 'images\\button_inactive.png', 'images\\button_active.png',
+                      arguments(screen)(main_menu), 120)
     gui = pygame.sprite.Group()
     gui.add(btn_main)
     gui.add(speed)
@@ -80,7 +80,7 @@ def main_loop(screen, lesson, lesson_name):
     speed = Text('speed:', 0, 0, 24)
     speed.set_position(10, 10)
     mistakes = Text('mistakes:', 0, 0, 24)
-    mistakes.set_position(10, 30)
+    mistakes.set_position(10, 40)
     gui = pygame.sprite.Group()
     gui.add(string)
     gui.add(speed)
@@ -164,20 +164,21 @@ def stats(screen):
         for i in range(5):
             if stat[1][i][0] == '-':
                 break
-            txt1 = Text('average speed: ' + stat[1][i][0] + ' symbols per minute', width // 2, height // 4 - 25 + i * 120, 48)
-            txt1.set_position(130, height // 4 - 50 + i * 120)
-            txt2 = Text('mistakes: ' + stat[1][i][1] + '%', width // 2, height // 4 + 25 + i * 120, 48)
-            txt2.set_position(130, height // 4 + i * 120)
+            txt1 = Text('average speed: ' + stat[1][i][0] + ' symbols per minute', width // 2,
+                        height // 4 - 25 + i * 120, 36)
+            txt1.set_position(130, height // 4 - 40 + i * 85)
+            txt2 = Text('mistakes: ' + stat[1][i][1] + '%', width // 2, height // 4 + 25 + i * 120, 36)
+            txt2.set_position(130, height // 4 + i * 85)
             tmp_speed.append(txt1)
             tmp_mistakes.append(txt2)
         speed[stat[0]] = tmp_speed
         mistakes[stat[0]] = tmp_mistakes
 
-    numbering = [Text(str(i+1) + '.', 100, height // 4 - 25 + i * 120, 48) for i in range(5)]
-    btn_main = Button(160, 70, 'back', 'images\\button_inactive.png', 'images\\button_active.png',
-                      arguments(screen)(main_menu))
-    selector = Selector(width // 2, 70, [x[0] for x in stats], [None] * len(stats))
-    no_stats = Text('no statistics yet', width // 2, height // 2, 48)
+    numbering = [Text(str(i+1) + '.', 100, height // 4 - 23 + i * 85, 36) for i in range(5)]
+    btn_main = Button(80, 50, 'back', 'images\\button_inactive.png', 'images\\button_active.png',
+                      arguments(screen)(main_menu), 120)
+    selector = Selector(width // 2, 50, [x[0] for x in stats], [None] * len(stats))
+    no_stats = Text('no statistics yet', width // 2, height // 2, 36)
     gui = pygame.sprite.Group()
     gui.add(btn_main)
     gui.add(selector)
@@ -246,5 +247,5 @@ def main_menu(screen):
 if __name__ == "__main__":
     pygame.init()
     pygame.display.set_caption("keyboard trainer")
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((1000, 600))
     main_menu(screen)

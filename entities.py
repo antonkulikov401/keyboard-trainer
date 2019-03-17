@@ -190,5 +190,5 @@ class LevelString(pygame.sprite.Sprite):
                                    black, (240, 240, 240))
         self.image = text_surface
         self.rect = text_surface.get_rect()
-        self.rect.x = screen.get_rect().width // 2
+        self.rect.x = screen.get_rect().width // 3
         self.rect.y = (screen.get_rect().height - self.rect.height) // 2
