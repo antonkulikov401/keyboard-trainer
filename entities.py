@@ -1,4 +1,5 @@
-"""This module includes in-game entities, classes of GUI elements and constants"""
+"""This module includes in-game entities, classes of GUI elements
+and constants"""
 import pygame
 import time
 from pathlib import Path
@@ -24,7 +25,8 @@ class Text(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
-    def __init__(self, text, x, y, font_size, font_color=black, font_path=str(Path('fonts/freesansbold.ttf'))):
+    def __init__(self, text, x, y, font_size, font_color=black,
+                 font_path=str(Path('fonts/freesansbold.ttf'))):
         super().__init__()
         self.font = pygame.font.Font(font_path, font_size)
         self.font_color = font_color
@@ -34,7 +36,8 @@ class Text(pygame.sprite.Sprite):
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self, x, y, text, img_inactive, img_active, action=None, width=250, height=70):
+    def __init__(self, x, y, text, img_inactive, img_active, action=None,
+                 width=250, height=70):
         super().__init__()
         self.text = text
         self.img_active = pygame.image.load(img_active).convert()
@@ -64,7 +67,8 @@ class Button(pygame.sprite.Sprite):
         if (self.rect.x < mouse_x < self.rect.x + self.rect.width
                 and self.rect.y < mouse_y < self.rect.y + self.rect.height):
             self.image = self.img_active
-            if event.type == pygame.MOUSEBUTTONDOWN and self.action is not None:
+            if (event.type == pygame.MOUSEBUTTONDOWN and
+                    self.action is not None):
                 if event.button == 1:
                     self.action()
         else:
@@ -84,14 +88,26 @@ class Selector(pygame.sprite.Sprite):
     def compound_buttons(self):
         if self.update_state:
             c_x, c_y = self.rect.center
-            self.btn_center = Button(c_x, c_y, self.lst[self.curr], str(Path('images/selector_center_inactive.png')),
-                                     str(Path('images/selector_center_active.png')), self.actions[self.curr])
-            self.btn_left = Button(c_x - (self.btn_center.rect.width + 70) // 2, c_y, '',
-                                   str(Path('images/selector_left_inactive.png')),
-                                   str(Path('images/selector_left_active.png')), self.prev, 70, 70)
-            self.btn_right = Button(c_x + (self.btn_center.rect.width + 70) // 2, c_y, '',
-                                    str(Path('images/selector_right_inactive.png')),
-                                    str(Path('images/selector_right_active.png')), self.next, 70, 70)
+            self.btn_center = Button(c_x, c_y, self.lst[self.curr],
+                                     str(Path('images/'
+                                              'selector_center_inactive.png')),
+                                     str(Path('images/'
+                                              'selector_center_active.png')),
+                                     self.actions[self.curr])
+            self.btn_left = Button(c_x - (self.btn_center.rect.width + 70)
+                                   // 2, c_y, '',
+                                   str(Path('images/'
+                                            'selector_left_inactive.png')),
+                                   str(Path('images/'
+                                            'selector_left_active.png')),
+                                   self.prev, 70, 70)
+            self.btn_right = Button(c_x + (self.btn_center.rect.width + 70)
+                                    // 2, c_y, '',
+                                    str(Path('images/'
+                                             'selector_right_inactive.png')),
+                                    str(Path('images/'
+                                             'selector_right_active.png')),
+                                    self.next, 70, 70)
 
             self.image = pygame.Surface([self.btn_center.rect.width + 140, 70])
             self.rect = self.image.get_rect()
@@ -105,8 +121,10 @@ class Selector(pygame.sprite.Sprite):
 
         for btn in self.group:
             curr_rect = btn.rect.copy()
-            curr_rect.center = (curr_rect.center[0] - self.rect.center[0] + self.rect.width // 2,
-                                curr_rect.center[1] - self.rect.center[1] + self.rect.height // 2)
+            curr_rect.center = (curr_rect.center[0] - self.rect.center[0] +
+                                self.rect.width // 2,
+                                curr_rect.center[1] - self.rect.center[1] +
+                                self.rect.height // 2)
             self.image.blit(btn.image, curr_rect)
 
     def __init__(self, x, y, lst, actions):
@@ -117,14 +135,23 @@ class Selector(pygame.sprite.Sprite):
         self.update_state = False
         self.group = pygame.sprite.Group()
 
-        self.btn_center = Button(x, y, self.lst[0], str(Path('images/selector_center_inactive.png')),
-                                 str(Path('images/selector_center_active.png')), self.actions[0])
-        self.btn_left = Button(x - (self.btn_center.rect.width + 70) // 2, y, '',
-                               str(Path('images/selector_left_inactive.png')),
-                               str(Path('images/selector_left_active.png')), self.prev, 70, 70)
-        self.btn_right = Button(x + (self.btn_center.rect.width + 70) // 2, y, '',
-                                str(Path('images/selector_right_inactive.png')),
-                                str(Path('images/selector_right_active.png')), self.next, 70, 70)
+        self.btn_center = Button(x, y, self.lst[0],
+                                 str(Path('images/'
+                                          'selector_center_inactive.png')),
+                                 str(Path('images/'
+                                          'selector_center_active.png')),
+                                 self.actions[0])
+        self.btn_left = Button(x - (self.btn_center.rect.width + 70) // 2, y,
+                               '', str(Path('images/'
+                                            'selector_left_inactive.png')),
+                               str(Path('images/'
+                                        'selector_left_active.png')),
+                               self.prev, 70, 70)
+        self.btn_right = Button(x + (self.btn_center.rect.width + 70) // 2, y,
+                                '', str(Path('images/'
+                                             'selector_right_inactive.png')),
+                                str(Path('images/selector_right_active.png')),
+                                self.next, 70, 70)
 
         self.image = pygame.Surface([self.btn_center.rect.width + 140, 70])
         self.rect = self.image.get_rect()
@@ -172,7 +199,8 @@ class LevelState:
             self.speed = self.current_speed()
 
     def update(self, event):
-        if not self.complete and event.unicode == self.lesson[self.curr_letter]:
+        if (not self.complete and
+                event.unicode == self.lesson[self.curr_letter]):
             self.next_letter()
         elif event.unicode != '':
             self.mistakes += 1
@@ -187,8 +215,9 @@ class LevelString(pygame.sprite.Sprite):
 
     def update(self, screen):
         font = pygame.font.Font(str(Path('fonts/freesansbold.ttf')), 72)
-        text_surface = font.render(self.state.lesson[self.state.curr_letter:self.state.curr_letter + 25], True,
-                                   black, (240, 240, 240))
+        txt = self.state.lesson[self.state.curr_letter:
+                                self.state.curr_letter + 25]
+        text_surface = font.render(txt, True, black, (240, 240, 240))
         self.image = text_surface
         self.rect = text_surface.get_rect()
         self.rect.x = screen.get_rect().width // 3

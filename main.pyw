@@ -1,3 +1,4 @@
+import pygame
 from entities import *
 from utilfuncs import *
 import os
@@ -40,11 +41,13 @@ def level_finished(screen, level_state):
         stats_file.write(output)
     stats_file.close()
 
-    speed = Text('average speed: ' + str(round(level_state.speed, 2)) + ' symbols per minute', width // 2,
-                 height // 2 - 30, 36)
-    mistakes = Text('mistakes: ' + str(level_state.mistakes) + ' (' + str(round(level_state.mistake_percentage(), 2))
-                    + '%)', width // 2, height // 2 + 30, 36)
-    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')), str(Path('images/button_active.png')),
+    speed = Text('average speed: ' + str(round(level_state.speed, 2)) +
+                 ' symbols per minute', width // 2, height // 2 - 30, 36)
+    mistakes = Text('mistakes: ' + str(level_state.mistakes) + ' (' +
+                    str(round(level_state.mistake_percentage(), 2)) + '%)',
+                    width // 2, height // 2 + 30, 36)
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
                       arguments(screen)(main_menu), 120)
     gui = pygame.sprite.Group()
     gui.add(btn_main)
@@ -88,8 +91,10 @@ def main_loop(screen, lesson, lesson_name):
 
     state.time_start()
     while True:
-        speed.set_text('speed: ' + str(int(state.current_speed())) + ' symbols per minute')
-        mistakes.set_text('mistakes: ' + str(state.mistakes) + ' (' + str(int(state.mistake_percentage())) + '%)')
+        speed.set_text('speed: ' + str(int(state.current_speed())) +
+                       ' symbols per minute')
+        mistakes.set_text('mistakes: ' + str(state.mistakes) + ' (' +
+                          str(int(state.mistake_percentage())) + '%)')
 
         for event in pygame.event.get():
             gui.update(screen)
@@ -118,16 +123,19 @@ def select_lesson(screen):
     screen.fill(white)
 
     path = Path('./lessons')
-    lesson_paths = [str(path / f) for f in os.listdir(str(path)) if f.endswith('.lesson')]
+    lesson_paths = [str(path / f) for f in os.listdir(str(path)) if
+                    f.endswith('.lesson')]
     lessons = []
     for lesson_path in lesson_paths:
         lesson_file = open(lesson_path, 'r')
         lesson_info = lesson_file.read().splitlines()
-        lessons.append((lesson_info[0], arguments(screen, lesson_info[1], lesson_info[0])(main_loop)))
+        lessons.append((lesson_info[0], arguments(screen, lesson_info[1],
+                                                  lesson_info[0])(main_loop)))
         lesson_file.close()
 
     caption = Text('choose lesson:', width // 2, height // 4, 50)
-    selector = Selector(width // 2, height // 2, [x[0] for x in lessons], [x[1] for x in lessons])
+    selector = Selector(width // 2, height // 2, [x[0] for x in lessons],
+                        [x[1] for x in lessons])
     gui = pygame.sprite.Group()
     gui.add(selector)
     gui.add(caption)
@@ -164,20 +172,25 @@ def stats(screen):
         for i in range(5):
             if stat[1][i][0] == '-':
                 break
-            txt1 = Text('average speed: ' + stat[1][i][0] + ' symbols per minute', width // 2,
+            txt1 = Text('average speed: ' + stat[1][i][0] +
+                        ' symbols per minute', width // 2,
                         height // 4 - 25 + i * 120, 36)
             txt1.set_position(130, height // 4 - 40 + i * 85)
-            txt2 = Text('mistakes: ' + stat[1][i][1] + '%', width // 2, height // 4 + 25 + i * 120, 36)
+            txt2 = Text('mistakes: ' + stat[1][i][1] + '%', width // 2,
+                        height // 4 + 25 + i * 120, 36)
             txt2.set_position(130, height // 4 + i * 85)
             tmp_speed.append(txt1)
             tmp_mistakes.append(txt2)
         speed[stat[0]] = tmp_speed
         mistakes[stat[0]] = tmp_mistakes
 
-    numbering = [Text(str(i+1) + '.', 100, height // 4 - 23 + i * 85, 36) for i in range(5)]
-    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')), str(Path('images/button_active.png')),
+    numbering = [Text(str(i+1) + '.', 100, height // 4 - 23 + i * 85, 36)
+                 for i in range(5)]
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
                       arguments(screen)(main_menu), 120)
-    selector = Selector(width // 2, 50, [x[0] for x in stats], [None] * len(stats))
+    selector = Selector(width // 2, 50, [x[0] for x in stats],
+                        [None] * len(stats))
     no_stats = Text('no statistics yet', width // 2, height // 2, 36)
     gui = pygame.sprite.Group()
     gui.add(btn_main)
@@ -220,11 +233,16 @@ def main_menu(screen):
     screen.fill(white)
 
     caption = Text('keyboard trainer', width // 2, height // 4, 80)
-    btn_play = Button(width // 2, height // 2, 'play', str(Path('images/button_inactive.png')),
-                      str(Path('images/button_active.png')), arguments(screen)(select_lesson), 300)
-    btn_stats = Button(width // 2, height // 2 + 100, 'statistics', str(Path('images/button_inactive.png')),
-                       str(Path('images/button_active.png')), arguments(screen)(stats), 300)
-    btn_quit = Button(width // 2, height // 2 + 200, 'exit', str(Path('images/button_inactive.png')),
+    btn_play = Button(width // 2, height // 2, 'play',
+                      str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
+                      arguments(screen)(select_lesson), 300)
+    btn_stats = Button(width // 2, height // 2 + 100, 'statistics',
+                       str(Path('images/button_inactive.png')),
+                       str(Path('images/button_active.png')),
+                       arguments(screen)(stats), 300)
+    btn_quit = Button(width // 2, height // 2 + 200, 'exit',
+                      str(Path('images/button_inactive.png')),
                       str(Path('images/button_active.png')), quit, 300)
     gui = pygame.sprite.Group()
     gui.add(btn_play)
