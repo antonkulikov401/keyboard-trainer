@@ -136,9 +136,13 @@ def select_lesson(screen):
     caption = Text('choose lesson:', width // 2, height // 4, 50)
     selector = Selector(width // 2, height // 2, [x[0] for x in lessons],
                         [x[1] for x in lessons])
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
+                      arguments(screen)(main_menu), 120)
     gui = pygame.sprite.Group()
     gui.add(selector)
     gui.add(caption)
+    gui.add(btn_main)
 
     while True:
         for event in pygame.event.get():
@@ -221,6 +225,82 @@ def stats(screen):
         clock.tick(fps)
 
 
+def lesson_saver(screen, text):
+    """Creates a window for typing lesson name.
+
+    Args:
+        screen: pygame screen to display content
+        text: content of lesson
+
+    """
+    width, height = screen.get_size()
+    clock = pygame.time.Clock()
+    input_box = InputBox()
+    saved = [False]
+    caption = Text('type name of the lesson:', width // 2, height // 2.8, 36)
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
+                      arguments(screen)(main_menu), 120)
+    btn_save = Button(80, 150, 'save', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
+                      arguments(input_box.text, text, saved)(save_lesson), 120)
+    gui = pygame.sprite.Group()
+    gui.add(input_box)
+    gui.add(caption)
+    gui.add(btn_main)
+    gui.add(btn_save)
+
+    while True:
+        if saved[0]:
+            main_menu(screen)
+
+        for event in pygame.event.get():
+            gui.update(screen, event)
+            if event.type == pygame.QUIT:
+                quit()
+
+        gui.draw(screen)
+        pygame.display.update()
+        screen.fill(white)
+        clock.tick(fps)
+
+
+def lesson_creator(screen):
+    """Creates a window to add custom lessons.
+
+    Args:
+        screen: pygame screen to display content
+
+    """
+    width, height = screen.get_size()
+    clock = pygame.time.Clock()
+    text = ""
+    input_box = InputBox()
+    caption = Text('type your lesson:', width // 2, height // 2.8, 36)
+    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
+                      arguments(screen)(main_menu), 120)
+    btn_save = Button(80, 150, 'save', str(Path('images/button_inactive.png')),
+                      str(Path('images/button_active.png')),
+                      arguments(screen, input_box.text)(lesson_saver), 120)
+    gui = pygame.sprite.Group()
+    gui.add(input_box)
+    gui.add(caption)
+    gui.add(btn_main)
+    gui.add(btn_save)
+
+    while True:
+        for event in pygame.event.get():
+            gui.update(screen, event)
+            if event.type == pygame.QUIT:
+                quit()
+
+        gui.draw(screen)
+        pygame.display.update()
+        screen.fill(white)
+        clock.tick(fps)
+
+
 def main_menu(screen):
     """Creates a main menu window.
 
@@ -241,12 +321,17 @@ def main_menu(screen):
                        str(Path('images/button_inactive.png')),
                        str(Path('images/button_active.png')),
                        arguments(screen)(stats), 300)
-    btn_quit = Button(width // 2, height // 2 + 200, 'exit',
+    btn_editor = Button(width // 2, height // 2 + 200, 'editor',
+                        str(Path('images/button_inactive.png')),
+                        str(Path('images/button_active.png')),
+                        arguments(screen)(lesson_creator), 300)
+    btn_quit = Button(width // 2, height // 2 + 300, 'exit',
                       str(Path('images/button_inactive.png')),
                       str(Path('images/button_active.png')), quit, 300)
     gui = pygame.sprite.Group()
     gui.add(btn_play)
     gui.add(btn_stats)
+    gui.add(btn_editor)
     gui.add(btn_quit)
     gui.add(caption)
 
@@ -265,5 +350,5 @@ def main_menu(screen):
 if __name__ == "__main__":
     pygame.init()
     pygame.display.set_caption("keyboard trainer")
-    screen = pygame.display.set_mode((1000, 600))
+    screen = pygame.display.set_mode((1000, 800))
     main_menu(screen)

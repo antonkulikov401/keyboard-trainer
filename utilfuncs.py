@@ -1,6 +1,7 @@
 """This module includes auxiliary functions"""
 import functools
 from collections.abc import Iterable
+from pathlib import Path
 
 
 def arguments(*args, **kwargs):
@@ -33,3 +34,12 @@ def read_stats():
         temp = [(v[i], v[i + 1]) for i in range(0, 10, 2)]
         stats.append((name, temp))
     return stats
+
+
+def save_lesson(name, text, saved):
+    path = Path('./lessons/' + name[0].replace(' ', '_') + '.lesson')
+    lesson_file = open(str(path), 'w')
+    lesson_file.write(name[0] + '\n')
+    lesson_file.write(text[0])
+    lesson_file.close()
+    saved[0] = True

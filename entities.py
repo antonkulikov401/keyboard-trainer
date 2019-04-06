@@ -1,6 +1,7 @@
 """This module includes in-game entities, classes of GUI elements
 and constants"""
 import pygame
+import pygame.locals as pl
 import time
 from pathlib import Path
 
@@ -222,3 +223,25 @@ class LevelString(pygame.sprite.Sprite):
         self.rect = text_surface.get_rect()
         self.rect.x = screen.get_rect().width // 3
         self.rect.y = (screen.get_rect().height - self.rect.height) // 2
+
+
+class InputBox(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([0, 0])
+        self.rect = self.image.get_rect()
+        self.text = [""]
+
+    def update(self, screen, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pl.K_BACKSPACE:
+                self.text[0] = self.text[0][:-1]
+            else:
+                self.text[0] += event.unicode
+        font = pygame.font.Font(str(Path('fonts/freesansbold.ttf')), 72)
+        text_surface = font.render(self.text[0], True, black, (240, 240, 240))
+        self.image = text_surface
+        self.rect = text_surface.get_rect()
+        self.rect.topright = (2 * screen.get_rect().width // 3,
+                              (screen.get_rect().height -
+                              self.rect.height) // 2)
