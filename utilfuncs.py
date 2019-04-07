@@ -55,7 +55,7 @@ def load_dicts():
     dict_paths = [str(path / f) for f in os.listdir(str(path)) if
                   f.endswith('.lg')]
     for dict_path in dict_paths:
-        dict_file = open(dict_path, 'r')
+        dict_file = open(dict_path, 'r', encoding='utf-8')
         dict_content = dict_file.read().splitlines()
         dict_lang = dict_content[0]
         dict_content.pop(0)
