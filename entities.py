@@ -4,6 +4,8 @@ import pygame
 import pygame.locals as pl
 import pygame.gfxdraw as gfx
 import time
+import colorsys
+import utilfuncs as util
 from pathlib import Path
 
 
@@ -36,6 +38,24 @@ class Text(pygame.sprite.Sprite):
         self.image = self.font.render(text, True, self.font_color)
         self.rect = self.image.get_rect()
         self.set_center_position(x, y)
+
+
+class SpriteButton(pygame.sprite.Sprite):
+    def __init__(self, x, y, img, action=None):
+        super().__init__()
+        self.image = pygame.image.load(img).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.action = action
+
+    def update(self, screen, event):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if (self.rect.x < mouse_x < self.rect.x + self.rect.width
+                and self.rect.y < mouse_y < self.rect.y + self.rect.height):
+            if (event.type == pygame.MOUSEBUTTONDOWN and
+                    self.action is not None):
+                if event.button == 1:
+                    self.action()
 
 
 class SimpleButton(pygame.sprite.Sprite):
@@ -185,7 +205,10 @@ class LevelState:
         self.start_time = 0.0
         self.speed = 0.0
         self.mistakes = 0
+        self.count = 0
         self.complete = False
+        self.heat = {}
+        util.load_heatmap(self.heat)
 
     def time_start(self):
         self.start_time = time.time()
@@ -197,7 +220,7 @@ class LevelState:
         return 60 * self.curr_letter / max(self.elapsed_time(), 1)
 
     def mistake_percentage(self):
-        return 100 * self.mistakes / len(self.lesson)
+        return 100 * self.mistakes / max(1, self.count)
 
     def next_letter(self):
         self.curr_letter += 1
@@ -206,11 +229,35 @@ class LevelState:
             self.speed = self.current_speed()
 
     def update(self, event):
+        synonyms = {'~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
+                    '^': '6', '&': '7', '*': '8', '(': '9', ')': '0', '_': '-',
+                    '+': '=', 'Й': 'Q', 'Ц': 'W', 'У': 'E', 'К': 'R', 'Е': 'T',
+                    'Н': 'Y', 'Г': 'U', 'Ш': 'I', 'Щ': 'O', 'З': 'P', 'Х': '[',
+                    'Ъ': ']', '{': '[', '}': ']', 'Ф': 'A', 'Ы': 'S', 'В': 'D',
+                    'А': 'F', 'П': 'G', 'Р': 'H', 'О': 'J', 'Л': 'K', 'Д': 'L',
+                    'Ж': ';', 'Э': '\'', 'Я': 'Z', 'Ч': 'X', 'С': 'C',
+                    'М': 'V', 'И': 'B', 'Т': 'N', 'Ь': 'M', 'Б': ',', 'Ю': '.',
+                    '.': '/'}
+        self.count += 1
         if (not self.complete and
                 event.unicode == self.lesson[self.curr_letter]):
             self.next_letter()
         elif event.unicode != '':
             self.mistakes += 1
+            if event.key == pygame.K_SPACE:
+                self.heat['@'][0] += 1
+            if event.unicode.upper() in synonyms.keys():
+                self.heat[synonyms[event.unicode.upper()]][0] += 1
+            try:
+                self.heat[event.unicode.upper()][0] += 1
+            except BaseException:
+                pass
+        if event.unicode.upper() in synonyms.keys():
+            self.heat[synonyms[event.unicode.upper()]][1] += 1
+        try:
+            self.heat[event.unicode.upper()][1] += 1
+        except BaseException:
+            pass
 
 
 class LevelString(pygame.sprite.Sprite):
@@ -251,3 +298,57 @@ class InputBox(pygame.sprite.Sprite):
         self.rect.topright = (2 * screen.get_rect().width // 3,
                               (screen.get_rect().height -
                               self.rect.height) // 2)
+
+
+class Heatmap(pygame.sprite.Sprite):
+    def create(self):
+        w, h = 47, 47
+        keys = r"""` 1 2 3 4 5 6 7 8 9 0 - = Q W E R T Y U I O P [ ] \ A S D F
+        G H J K L ; ' Z X C V B N M , . / @""".split()
+        for i in range(13):
+            x = 2 + (w + 1) * i
+            y = 2
+            p = self.heat[keys[i]][0] / max(1, self.heat[keys[i]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        for i in range(12):
+            x = 74 + (w + 1) * i
+            y = 50
+            p = self.heat[keys[i + 13]][0] / max(1, self.heat[keys[i + 13]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        for i in range(11):
+            x = 87 + (w + 1) * i
+            y = 98
+            p = self.heat[keys[i + 25]][0] / max(1, self.heat[keys[i + 25]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        for i in range(10):
+            x = 110 + (w + 1) * i
+            y = 146
+            p = self.heat[keys[i + 35]][0] / max(1, self.heat[keys[i + 35]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        p = self.heat[keys[47]][0] / max(1, self.heat[keys[47]][1])
+        rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4, 0.5,
+               0.5)]
+        rgb.append(127)
+        pygame.gfxdraw.box(self.image, pygame.Rect(193, 194, 277, 47), rgb)
+
+    def __init__(self, x, y):
+        super().__init__()
+        img = pygame.image.load(str(Path('images/keyboard.png')))
+        self.image = img.convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.heat = {}
+        util.load_heatmap(self.heat)
+        self.create()
