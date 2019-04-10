@@ -1,13 +1,18 @@
 """This module includes in-game entities, classes of GUI elements
 and constants"""
 import pygame
+import pygame.locals as pl
+import pygame.gfxdraw as gfx
 import time
+import colorsys
+import utilfuncs as util
 from pathlib import Path
 
 
 fps = 60
 white = (255, 255, 255)
 black = (0, 0, 0)
+gray = (120, 120, 120)
 
 
 class Text(pygame.sprite.Sprite):
@@ -35,47 +40,89 @@ class Text(pygame.sprite.Sprite):
         self.set_center_position(x, y)
 
 
-class Button(pygame.sprite.Sprite):
-    def __init__(self, x, y, text, img_inactive, img_active, action=None,
-                 width=250, height=70):
+class SpriteButton(pygame.sprite.Sprite):
+    def __init__(self, x, y, img, action=None):
         super().__init__()
-        self.text = text
-        self.img_active = pygame.image.load(img_active).convert()
-        self.img_inactive = pygame.image.load(img_inactive).convert()
-        self.action = action
-
-        font = pygame.font.Font(str(Path('fonts/freesansbold.ttf')), 50)
-        text_surface = font.render(text, True, (0, 0, 0))
-        text_rect = text_surface.get_rect()
-        self.text = (text_surface, text_rect)
-
-        w = max(text_rect.width + 20, width)
-        h = max(text_rect.height + 20, height)
-        self.img_inactive = pygame.transform.scale(self.img_inactive, (w, h))
-        self.img_active = pygame.transform.scale(self.img_active, (w, h))
-        self.image = self.img_inactive
-
+        self.image = pygame.image.load(img).convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.text[1].center = (self.rect.width // 2, self.rect.height // 2)
-
-        self.img_inactive.blit(self.text[0], self.text[1])
-        self.img_active.blit(self.text[0], self.text[1])
+        self.rect.topleft = (x, y)
+        self.action = action
 
     def update(self, screen, event):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         if (self.rect.x < mouse_x < self.rect.x + self.rect.width
                 and self.rect.y < mouse_y < self.rect.y + self.rect.height):
-            self.image = self.img_active
+            if (event.type == pygame.MOUSEBUTTONDOWN and
+                    self.action is not None):
+                if event.button == 1:
+                    self.action()
+
+
+class SimpleButton(pygame.sprite.Sprite):
+    def fill_with_outline(self, fill_color, outline_color, border=10):
+        self.image.fill(outline_color)
+        self.image.fill(fill_color,
+                        self.image.get_rect().inflate(-border, -border))
+
+    def set_image(self, active):
+        self.text_surface = self.font.render(self.caption, True, black if not
+                                             active else gray)
+        self.text = (self.text_surface, self.text_rect)
+        self.image = pygame.Surface([self.w, self.h])
+        self.fill_with_outline(white, black if not active else gray)
+        self.rect = self.image.get_rect()
+        self.rect.center = (self.x, self.y)
+        self.text[1].center = (self.rect.width // 2, self.rect.height // 2)
+        if self.type == 'right_arrow':
+            gfx.aapolygon(self.image, [[3 * self.w // 4, self.h // 2],
+                          [self.w // 4, self.h // 4],
+                          [self.w // 4, 3 * self.h // 4]], gray if active else
+                          black)
+            gfx.filled_polygon(self.image, [[3 * self.w // 4, self.h // 2],
+                               [self.w // 4, self.h // 4],
+                               [self.w // 4, 3 * self.h // 4]], gray if active
+                               else black)
+        elif self.type == 'left_arrow':
+            gfx.aapolygon(self.image, [[self.w // 4, self.h // 2],
+                          [3 * self.w // 4, self.h // 4],
+                          [3 * self.w // 4, 3 * self.h // 4]], gray if active
+                          else black)
+            gfx.filled_polygon(self.image, [[self.w // 4, self.h // 2],
+                               [3 * self.w // 4, self.h // 4],
+                               [3 * self.w // 4, 3 * self.h // 4]], gray if
+                               active else black)
+        else:
+            self.image.blit(self.text[0], self.text[1])
+
+    def __init__(self, x, y, width, height, text, action=None, type=None):
+        super().__init__()
+        self.action = action
+        self.type = type
+        self.caption = text
+        self.font = pygame.font.Font(str(Path('fonts/freesansbold.ttf')), 50)
+        self.text_surface = self.font.render(self.caption, True, black)
+        self.text_rect = self.text_surface.get_rect()
+        self.text = (self.text_surface, self.text_rect)
+        self.x = x
+        self.y = y
+        self.w = max(self.text_rect.width + 20, width)
+        self.h = max(self.text_rect.height + 20, height)
+        self.set_image(False)
+
+    def update(self, screen, event):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if (self.rect.x < mouse_x < self.rect.x + self.rect.width
+                and self.rect.y < mouse_y < self.rect.y + self.rect.height):
+            self.set_image(True)
             if (event.type == pygame.MOUSEBUTTONDOWN and
                     self.action is not None):
                 if event.button == 1:
                     self.action()
         else:
-            self.image = self.img_inactive
+            self.set_image(False)
 
 
-class Selector(pygame.sprite.Sprite):
+class SimpleSelector(pygame.sprite.Sprite):
 
     def prev(self):
         self.curr = (self.curr - 1) % len(self.lst)
@@ -88,28 +135,17 @@ class Selector(pygame.sprite.Sprite):
     def compound_buttons(self):
         if self.update_state:
             c_x, c_y = self.rect.center
-            self.btn_center = Button(c_x, c_y, self.lst[self.curr],
-                                     str(Path('images/'
-                                              'selector_center_inactive.png')),
-                                     str(Path('images/'
-                                              'selector_center_active.png')),
-                                     self.actions[self.curr])
-            self.btn_left = Button(c_x - (self.btn_center.rect.width + 70)
-                                   // 2, c_y, '',
-                                   str(Path('images/'
-                                            'selector_left_inactive.png')),
-                                   str(Path('images/'
-                                            'selector_left_active.png')),
-                                   self.prev, 70, 70)
-            self.btn_right = Button(c_x + (self.btn_center.rect.width + 70)
-                                    // 2, c_y, '',
-                                    str(Path('images/'
-                                             'selector_right_inactive.png')),
-                                    str(Path('images/'
-                                             'selector_right_active.png')),
-                                    self.next, 70, 70)
+            self.btn_center = SimpleButton(c_x, c_y, 350, 70,
+                                           self.lst[self.curr],
+                                           self.actions[self.curr])
+            self.btn_left = SimpleButton(c_x - (self.btn_center.rect.width +
+                                         60) // 2, c_y, 70, 70, '', self.prev,
+                                         'left_arrow')
+            self.btn_right = SimpleButton(c_x + (self.btn_center.rect.width +
+                                          60) // 2, c_y, 70, 70, '', self.next,
+                                          'right_arrow')
 
-            self.image = pygame.Surface([self.btn_center.rect.width + 140, 70])
+            self.image = pygame.Surface([self.btn_center.rect.width + 130, 70])
             self.rect = self.image.get_rect()
             self.rect.center = (c_x, c_y)
 
@@ -135,30 +171,21 @@ class Selector(pygame.sprite.Sprite):
         self.update_state = False
         self.group = pygame.sprite.Group()
 
-        self.btn_center = Button(x, y, self.lst[0],
-                                 str(Path('images/'
-                                          'selector_center_inactive.png')),
-                                 str(Path('images/'
-                                          'selector_center_active.png')),
-                                 self.actions[0])
-        self.btn_left = Button(x - (self.btn_center.rect.width + 70) // 2, y,
-                               '', str(Path('images/'
-                                            'selector_left_inactive.png')),
-                               str(Path('images/'
-                                        'selector_left_active.png')),
-                               self.prev, 70, 70)
-        self.btn_right = Button(x + (self.btn_center.rect.width + 70) // 2, y,
-                                '', str(Path('images/'
-                                             'selector_right_inactive.png')),
-                                str(Path('images/selector_right_active.png')),
-                                self.next, 70, 70)
+        self.btn_center = SimpleButton(x, y, 350, 70, self.lst[0],
+                                       self.actions[0])
+        self.btn_left = SimpleButton(x - (self.btn_center.rect.width + 60)
+                                     // 2, y, 70, 70, '', self.prev,
+                                     'left_arrow')
+        self.btn_right = SimpleButton(x + (self.btn_center.rect.width + 60)
+                                      // 2, y, 70, 70, '', self.next,
+                                      'right_arrow')
 
-        self.image = pygame.Surface([self.btn_center.rect.width + 140, 70])
+        self.image = pygame.Surface([self.btn_center.rect.width + 130, 70])
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
-        self.group.add(self.btn_left)
         self.group.add(self.btn_center)
+        self.group.add(self.btn_left)
         self.group.add(self.btn_right)
         self.compound_buttons()
 
@@ -178,7 +205,10 @@ class LevelState:
         self.start_time = 0.0
         self.speed = 0.0
         self.mistakes = 0
+        self.count = 0
         self.complete = False
+        self.heat = {}
+        util.load_heatmap(self.heat)
 
     def time_start(self):
         self.start_time = time.time()
@@ -190,7 +220,7 @@ class LevelState:
         return 60 * self.curr_letter / max(self.elapsed_time(), 1)
 
     def mistake_percentage(self):
-        return 100 * self.mistakes / len(self.lesson)
+        return 100 * self.mistakes / max(1, self.count)
 
     def next_letter(self):
         self.curr_letter += 1
@@ -199,11 +229,35 @@ class LevelState:
             self.speed = self.current_speed()
 
     def update(self, event):
+        synonyms = {'~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
+                    '^': '6', '&': '7', '*': '8', '(': '9', ')': '0', '_': '-',
+                    '+': '=', 'Й': 'Q', 'Ц': 'W', 'У': 'E', 'К': 'R', 'Е': 'T',
+                    'Н': 'Y', 'Г': 'U', 'Ш': 'I', 'Щ': 'O', 'З': 'P', 'Х': '[',
+                    'Ъ': ']', '{': '[', '}': ']', 'Ф': 'A', 'Ы': 'S', 'В': 'D',
+                    'А': 'F', 'П': 'G', 'Р': 'H', 'О': 'J', 'Л': 'K', 'Д': 'L',
+                    'Ж': ';', 'Э': '\'', 'Я': 'Z', 'Ч': 'X', 'С': 'C',
+                    'М': 'V', 'И': 'B', 'Т': 'N', 'Ь': 'M', 'Б': ',', 'Ю': '.',
+                    '.': '/'}
+        self.count += 1
         if (not self.complete and
                 event.unicode == self.lesson[self.curr_letter]):
             self.next_letter()
         elif event.unicode != '':
             self.mistakes += 1
+            if event.key == pygame.K_SPACE:
+                self.heat['@'][0] += 1
+            if event.unicode.upper() in synonyms.keys():
+                self.heat[synonyms[event.unicode.upper()]][0] += 1
+            try:
+                self.heat[event.unicode.upper()][0] += 1
+            except BaseException:
+                pass
+        if event.unicode.upper() in synonyms.keys():
+            self.heat[synonyms[event.unicode.upper()]][1] += 1
+        try:
+            self.heat[event.unicode.upper()][1] += 1
+        except BaseException:
+            pass
 
 
 class LevelString(pygame.sprite.Sprite):
@@ -213,7 +267,7 @@ class LevelString(pygame.sprite.Sprite):
         self.image = pygame.Surface([0, 0])
         self.rect = self.image.get_rect()
 
-    def update(self, screen):
+    def update(self, screen, *args):
         font = pygame.font.Font(str(Path('fonts/freesansbold.ttf')), 72)
         txt = self.state.lesson[self.state.curr_letter:
                                 self.state.curr_letter + 25]
@@ -222,3 +276,79 @@ class LevelString(pygame.sprite.Sprite):
         self.rect = text_surface.get_rect()
         self.rect.x = screen.get_rect().width // 3
         self.rect.y = (screen.get_rect().height - self.rect.height) // 2
+
+
+class InputBox(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([0, 0])
+        self.rect = self.image.get_rect()
+        self.text = [""]
+
+    def update(self, screen, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pl.K_BACKSPACE:
+                self.text[0] = self.text[0][:-1]
+            else:
+                self.text[0] += event.unicode
+        font = pygame.font.Font(str(Path('fonts/freesansbold.ttf')), 72)
+        text_surface = font.render(self.text[0], True, black, (240, 240, 240))
+        self.image = text_surface
+        self.rect = text_surface.get_rect()
+        self.rect.topright = (2 * screen.get_rect().width // 3,
+                              (screen.get_rect().height -
+                              self.rect.height) // 2)
+
+
+class Heatmap(pygame.sprite.Sprite):
+    def create(self):
+        w, h = 47, 47
+        keys = r"""` 1 2 3 4 5 6 7 8 9 0 - = Q W E R T Y U I O P [ ] \ A S D F
+        G H J K L ; ' Z X C V B N M , . / @""".split()
+        for i in range(13):
+            x = 2 + (w + 1) * i
+            y = 2
+            p = self.heat[keys[i]][0] / max(1, self.heat[keys[i]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        for i in range(12):
+            x = 74 + (w + 1) * i
+            y = 50
+            p = self.heat[keys[i + 13]][0] / max(1, self.heat[keys[i + 13]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        for i in range(11):
+            x = 87 + (w + 1) * i
+            y = 98
+            p = self.heat[keys[i + 25]][0] / max(1, self.heat[keys[i + 25]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        for i in range(10):
+            x = 110 + (w + 1) * i
+            y = 146
+            p = self.heat[keys[i + 35]][0] / max(1, self.heat[keys[i + 35]][1])
+            rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4,
+                   0.5, 0.5)]
+            rgb.append(127)
+            pygame.gfxdraw.box(self.image, pygame.Rect(x, y, w, h), rgb)
+        p = self.heat[keys[47]][0] / max(1, self.heat[keys[47]][1])
+        rgb = [round(x * 255) for x in colorsys.hls_to_rgb((1 - p) * 0.4, 0.5,
+               0.5)]
+        rgb.append(127)
+        pygame.gfxdraw.box(self.image, pygame.Rect(193, 194, 277, 47), rgb)
+
+    def __init__(self, x, y):
+        super().__init__()
+        img = pygame.image.load(str(Path('images/keyboard.png')))
+        self.image = img.convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.heat = {}
+        util.load_heatmap(self.heat)
+        self.create()

@@ -1,6 +1,6 @@
 import pygame
 from entities import *
-from utilfuncs import *
+import utilfuncs as util
 import os
 
 
@@ -16,7 +16,7 @@ def level_finished(screen, level_state):
     clock = pygame.time.Clock()
     screen.fill(white)
 
-    stats = read_stats()
+    stats = util.read_stats()
     curr_speed = str(round(level_state.speed, 2))
     curr_mistakes = str(round(level_state.mistake_percentage(), 2))
     for stat in stats:
@@ -37,18 +37,20 @@ def level_finished(screen, level_state):
 
     stats_file = open('stats.log', 'w')
     for stat in stats:
-        output = stat[0] + '@' + ' '.join(all_elements(stat[1])) + '\n'
+        output = stat[0] + '@' + ' '.join(util.all_elements(stat[1])) + '\n'
         stats_file.write(output)
     stats_file.close()
 
-    speed = Text('average speed: ' + str(round(level_state.speed, 2)) +
-                 ' symbols per minute', width // 2, height // 2 - 30, 36)
-    mistakes = Text('mistakes: ' + str(level_state.mistakes) + ' (' +
-                    str(round(level_state.mistake_percentage(), 2)) + '%)',
-                    width // 2, height // 2 + 30, 36)
-    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
-                      str(Path('images/button_active.png')),
-                      arguments(screen)(main_menu), 120)
+    util.update_heatmap(level_state.heat)
+
+    speed = Text(util.t('average speed') + ': ' + str(round(level_state.speed,
+                 2)) + ' ' + util.t('symbols per minute'), width // 2, height
+                 // 2 - 30, 36)
+    mistakes = Text(util.t('mistakes') + ': ' + str(level_state.mistakes) +
+                    ' (' + str(round(level_state.mistake_percentage(), 2)) +
+                    '%)', width // 2, height // 2 + 30, 36)
+    btn_main = SimpleButton(120, 55, 200, 70, util.t('back'),
+                            util.arguments(screen)(main_menu))
     gui = pygame.sprite.Group()
     gui.add(btn_main)
     gui.add(speed)
@@ -80,24 +82,27 @@ def main_loop(screen, lesson, lesson_name):
 
     screen.fill(white)
     string = LevelString(state)
-    speed = Text('speed:', 0, 0, 24)
-    speed.set_position(10, 10)
-    mistakes = Text('mistakes:', 0, 0, 24)
-    mistakes.set_position(10, 40)
+    speed = Text(util.t('speed') + ':', 0, 0, 24)
+    speed.set_position(20, 20)
+    mistakes = Text(util.t('mistakes') + ':', 0, 0, 24)
+    mistakes.set_position(20, 50)
+    btn_main = SimpleButton(screen.get_size()[0] - 120, 55, 200, 70,
+                            util.t('back'), util.arguments(screen)(main_menu))
     gui = pygame.sprite.Group()
     gui.add(string)
     gui.add(speed)
     gui.add(mistakes)
+    gui.add(btn_main)
 
     state.time_start()
     while True:
-        speed.set_text('speed: ' + str(int(state.current_speed())) +
-                       ' symbols per minute')
-        mistakes.set_text('mistakes: ' + str(state.mistakes) + ' (' +
-                          str(int(state.mistake_percentage())) + '%)')
+        speed.set_text(util.t('speed') + ': ' + str(int(state.current_speed()))
+                       + ' ' + util.t('symbols per minute'))
+        mistakes.set_text(util.t('mistakes') + ': ' + str(state.mistakes) +
+                          ' (' + str(int(state.mistake_percentage())) + '%)')
 
         for event in pygame.event.get():
-            gui.update(screen)
+            gui.update(screen, event)
             if event.type == pygame.KEYDOWN:
                 state.update(event)
             if event.type == pygame.QUIT:
@@ -129,16 +134,19 @@ def select_lesson(screen):
     for lesson_path in lesson_paths:
         lesson_file = open(lesson_path, 'r')
         lesson_info = lesson_file.read().splitlines()
-        lessons.append((lesson_info[0], arguments(screen, lesson_info[1],
-                                                  lesson_info[0])(main_loop)))
+        lessons.append((lesson_info[0], util.arguments(screen, lesson_info[1],
+                       lesson_info[0])(main_loop)))
         lesson_file.close()
 
-    caption = Text('choose lesson:', width // 2, height // 4, 50)
-    selector = Selector(width // 2, height // 2, [x[0] for x in lessons],
-                        [x[1] for x in lessons])
+    caption = Text(util.t('choose lesson'), width // 2, height // 3, 50)
+    selector = SimpleSelector(width // 2, height // 2, [x[0] for x in lessons],
+                              [x[1] for x in lessons])
+    btn_main = SimpleButton(120, 55, 200, 70, util.t('back'),
+                            util.arguments(screen)(main_menu))
     gui = pygame.sprite.Group()
     gui.add(selector)
     gui.add(caption)
+    gui.add(btn_main)
 
     while True:
         for event in pygame.event.get():
@@ -162,7 +170,7 @@ def stats(screen):
     width, height = screen.get_size()
     clock = pygame.time.Clock()
     screen.fill(white)
-    stats = read_stats()
+    stats = util.read_stats()
 
     speed = {}
     mistakes = {}
@@ -172,12 +180,12 @@ def stats(screen):
         for i in range(5):
             if stat[1][i][0] == '-':
                 break
-            txt1 = Text('average speed: ' + stat[1][i][0] +
-                        ' symbols per minute', width // 2,
+            txt1 = Text(util.t('average speed') + ': ' + stat[1][i][0] +
+                        ' ' + util.t('symbols per minute'), width // 2,
                         height // 4 - 25 + i * 120, 36)
             txt1.set_position(130, height // 4 - 40 + i * 85)
-            txt2 = Text('mistakes: ' + stat[1][i][1] + '%', width // 2,
-                        height // 4 + 25 + i * 120, 36)
+            txt2 = Text(util.t('mistakes') + ': ' + stat[1][i][1] + '%', width
+                        // 2, height // 4 + 25 + i * 120, 36)
             txt2.set_position(130, height // 4 + i * 85)
             tmp_speed.append(txt1)
             tmp_mistakes.append(txt2)
@@ -186,15 +194,17 @@ def stats(screen):
 
     numbering = [Text(str(i+1) + '.', 100, height // 4 - 23 + i * 85, 36)
                  for i in range(5)]
-    btn_main = Button(80, 50, 'back', str(Path('images/button_inactive.png')),
-                      str(Path('images/button_active.png')),
-                      arguments(screen)(main_menu), 120)
-    selector = Selector(width // 2, 50, [x[0] for x in stats],
-                        [None] * len(stats))
-    no_stats = Text('no statistics yet', width // 2, height // 2, 36)
+    selector = SimpleSelector(width // 2, 55, [x[0] for x in stats],
+                              [None] * len(stats))
+    btn_main = SimpleButton(120, 55, 200, 70, util.t('back'),
+                            util.arguments(screen)(main_menu))
+    no_stats = Text(util.t('no statistics yet'), width // 2, height // 2, 48)
+    btn_heatmap = SimpleButton(width - 160, 55, 280, 70, util.t('heatmap'),
+                               util.arguments(screen)(heatmap_screen))
     gui = pygame.sprite.Group()
     gui.add(btn_main)
     gui.add(selector)
+    gui.add(btn_heatmap)
 
     while True:
 
@@ -207,9 +217,130 @@ def stats(screen):
                 gui.add(mistakes[curr][i])
                 gui.add(numbering[i])
             gui.add(selector)
+            gui.add(btn_heatmap)
         except KeyError:
             gui.add(no_stats)
 
+        for event in pygame.event.get():
+            gui.update(screen, event)
+            if event.type == pygame.QUIT:
+                quit()
+
+        gui.draw(screen)
+        pygame.display.update()
+        screen.fill(white)
+        clock.tick(fps)
+
+
+def lesson_saver(screen, text):
+    """Creates a window for typing lesson name.
+
+    Args:
+        screen: pygame screen to display content
+        text: content of lesson
+
+    """
+    width, height = screen.get_size()
+    clock = pygame.time.Clock()
+    input_box = InputBox()
+    saved = [False]
+    caption = Text(util.t('type name of the lesson') + ':', width // 2, height
+                   // 2.8, 48)
+    btn_main = SimpleButton(170, 55, 280, 70, util.t('back'),
+                            util.arguments(screen)(main_menu))
+    btn_save = SimpleButton(170, 155, 280, 70, util.t('save'),
+                            util.arguments(input_box.text, text,
+                            saved)(util.save_lesson))
+    gui = pygame.sprite.Group()
+    gui.add(input_box)
+    gui.add(caption)
+    gui.add(btn_main)
+    gui.add(btn_save)
+
+    while True:
+        if saved[0]:
+            main_menu(screen)
+
+        for event in pygame.event.get():
+            gui.update(screen, event)
+            if event.type == pygame.QUIT:
+                quit()
+
+        gui.draw(screen)
+        pygame.display.update()
+        screen.fill(white)
+        clock.tick(fps)
+
+
+def lesson_creator(screen):
+    """Creates a window to add custom lessons.
+
+    Args:
+        screen: pygame screen to display content
+
+    """
+    width, height = screen.get_size()
+    clock = pygame.time.Clock()
+    text = ""
+    input_box = InputBox()
+    caption = Text(util.t('type your lesson') + ':', width // 2, height // 2.8,
+                   48)
+    btn_main = SimpleButton(170, 55, 280, 70, util.t('back'),
+                            util.arguments(screen)(main_menu))
+    btn_save = SimpleButton(170, 155, 280, 70, util.t('save'),
+                            util.arguments(screen,
+                            input_box.text)(lesson_saver))
+    gui = pygame.sprite.Group()
+    gui.add(input_box)
+    gui.add(caption)
+    gui.add(btn_main)
+    gui.add(btn_save)
+
+    while True:
+        for event in pygame.event.get():
+            gui.update(screen, event)
+            if event.type == pygame.QUIT:
+                quit()
+
+        gui.draw(screen)
+        pygame.display.update()
+        screen.fill(white)
+        clock.tick(fps)
+
+
+def main_gui(screen):
+    width, height = screen.get_size()
+    caption = Text(util.t('keyboard trainer'), width // 2, height // 3.5, 100)
+    btn_play = SimpleButton(width // 2, height // 2, 350, 70, util.t('play'),
+                            util.arguments(screen)(select_lesson))
+    btn_stats = SimpleButton(width // 2, height // 2 + 100, 350, 70,
+                             util.t('statistics'),
+                             util.arguments(screen)(stats))
+    btn_editor = SimpleButton(width // 2, height // 2 + 200, 350, 70,
+                              util.t('editor'),
+                              util.arguments(screen)(lesson_creator))
+    btn_quit = SimpleButton(width // 2, height // 2 + 300, 350, 70,
+                            util.t('exit'), quit)
+    return caption, btn_play, btn_stats, btn_editor, btn_quit
+
+
+def heatmap_screen(screen):
+    """Creates a window to observe the heatmap of the most mistyped keys.
+
+    Args:
+        screen: pygame screen to display content
+
+    """
+    width, height = screen.get_size()
+    clock = pygame.time.Clock()
+    btn_main = SimpleButton(170, 55, 280, 70, util.t('back'),
+                            util.arguments(screen)(main_menu))
+    heatmap = Heatmap(width // 2, height // 2)
+    gui = pygame.sprite.Group()
+    gui.add(btn_main)
+    gui.add(heatmap)
+
+    while True:
         for event in pygame.event.get():
             gui.update(screen, event)
             if event.type == pygame.QUIT:
@@ -228,29 +359,37 @@ def main_menu(screen):
         screen: pygame screen to display content
 
     """
-    width, height = screen.get_size()
     clock = pygame.time.Clock()
     screen.fill(white)
+    flag = [False]
 
-    caption = Text('keyboard trainer', width // 2, height // 4, 80)
-    btn_play = Button(width // 2, height // 2, 'play',
-                      str(Path('images/button_inactive.png')),
-                      str(Path('images/button_active.png')),
-                      arguments(screen)(select_lesson), 300)
-    btn_stats = Button(width // 2, height // 2 + 100, 'statistics',
-                       str(Path('images/button_inactive.png')),
-                       str(Path('images/button_active.png')),
-                       arguments(screen)(stats), 300)
-    btn_quit = Button(width // 2, height // 2 + 200, 'exit',
-                      str(Path('images/button_inactive.png')),
-                      str(Path('images/button_active.png')), quit, 300)
+    capt, btn_play, btn_stats, btn_editor, btn_quit = main_gui(screen)
+    btn_eng = SpriteButton(20, 10, str(Path('images/eng.png')),
+                           util.arguments('eng', flag)(util.set_lang))
+    btn_rus = SpriteButton(20, 50, str(Path('images/rus.png')),
+                           util.arguments('rus', flag)(util.set_lang))
     gui = pygame.sprite.Group()
     gui.add(btn_play)
     gui.add(btn_stats)
+    gui.add(btn_editor)
     gui.add(btn_quit)
-    gui.add(caption)
+    gui.add(capt)
+    gui.add(btn_eng)
+    gui.add(btn_rus)
 
     while True:
+        if flag[0]:
+            capt, btn_play, btn_stats, btn_editor, btn_quit = main_gui(screen)
+            gui.empty()
+            gui.add(btn_play)
+            gui.add(btn_stats)
+            gui.add(btn_editor)
+            gui.add(btn_quit)
+            gui.add(capt)
+            gui.add(btn_eng)
+            gui.add(btn_rus)
+            flag[0] = False
+
         for event in pygame.event.get():
             gui.update(screen, event)
             if event.type == pygame.QUIT:
@@ -264,6 +403,7 @@ def main_menu(screen):
 
 if __name__ == "__main__":
     pygame.init()
+    util.load_dicts()
     pygame.display.set_caption("keyboard trainer")
-    screen = pygame.display.set_mode((1000, 600))
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     main_menu(screen)
